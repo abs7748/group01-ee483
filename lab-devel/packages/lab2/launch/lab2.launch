@@ -1,0 +1,8 @@
+<launch>
+
+<group ns = "driver">
+    <node pkg="lab2" name="lane_detect" type="lane_detect.py" output="screen"/>
+
+</group>
+
+</launch>

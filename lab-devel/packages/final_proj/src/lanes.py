@@ -100,7 +100,7 @@ class ImageProcessor:
             
 
             # hough transform
-            lines_white = cv2.HoughLinesP(combined_white, 1, np.pi/180, 10, minLineLength=20, maxLineGap=3)
+            lines_white = cv2.HoughLinesP(combined_white, 1, np.pi/180, 10, minLineLength=10, maxLineGap=50)
             output_white = self.output_lines(cropped_image, lines_white, (255,0,0))
 
             lines_yellow = cv2.HoughLinesP(combined_yellow, 1, np.pi/180, 10, minLineLength=10, maxLineGap=50)

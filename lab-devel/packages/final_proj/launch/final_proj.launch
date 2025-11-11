@@ -1,0 +1,12 @@
+<launch>
+
+<group ns = "driver">
+    <param name="intersection" type="string" value='go'>
+    <node pkg="final_proj" name="lanes" type="lanes.py" output="screen"/>
+    <node pkg="final_proj" name="driver" type="driver.py" output="screen"/>
+    <node pkg="final_proj" name="intersection" type="intersection.py" output="screen"/>
+    <node pkg="final_proj" name="master_control" type="master_control.py" output="screen"/>
+
+</group>
+
+</launch>

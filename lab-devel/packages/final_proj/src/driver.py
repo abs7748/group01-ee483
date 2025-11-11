@@ -9,6 +9,9 @@ from duckietown_msgs.msg import WheelsCmdStamped # Import the message for the wh
 
 class Driver():#CHANGE CLASSNAME to the name of your class
     def __init__(self):
+        
+        #rospy.Subscriber("lane_follow", , self.image_callback, queue_size=1, buff_size=10000000)
+        #rospy.Subscriber("direction", , self.image_callback, queue_size=1, buff_size=10000000)
         self.pub = rospy.Publisher('/ee483mm01/wheels_driver_node/wheels_cmd', WheelsCmdStamped, queue_size=10)
         self.cmd_pub = WheelsCmdStamped()
 
@@ -24,7 +27,7 @@ class Driver():#CHANGE CLASSNAME to the name of your class
 
     def move_straight(self,speed =0.4, duration=2.5):
         self.cmd_pub.vel_right = speed
-        self.cmd_pub.vel_left = speed + .05
+        self.cmd_pub.vel_left = speed + .2
         start_time = rospy.Time.now().to_sec()
 
         while rospy.Time.now().to_sec() - start_time < duration and not rospy.is_shutdown():
@@ -33,9 +36,9 @@ class Driver():#CHANGE CLASSNAME to the name of your class
 
         self.stop()
 
-    def move_straight_slow(self,speed =0.2, duration=.5):
+    def move_straight_slow(self,duration=.5,speed =0.2):
         self.cmd_pub.vel_right = speed
-        self.cmd_pub.vel_left = speed + .05
+        self.cmd_pub.vel_left = speed + .2
         start_time = rospy.Time.now().to_sec()
 
         while rospy.Time.now().to_sec() - start_time < duration and not rospy.is_shutdown():
@@ -44,30 +47,39 @@ class Driver():#CHANGE CLASSNAME to the name of your class
     
 
 
-    def turn(self,duration = .8):
-        self.cmd_pub.vel_right = 0.2
-        self.cmd_pub.vel_left = -.2
+    def turn(self,direction, duration=0.8):
+        self.move_straight_slow(2,0.2)
+        self.stop(2)
+        if direction == 'left':
+            self.cmd_pub.vel_right = 0.2
+            self.cmd_pub.vel_left = -0.2
+        if direction == 'right':
+            self.cmd_pub.vel_right = -0.2
+            self.cmd_pub.vel_left = 0.2
+        
         start_time = rospy.Time.now().to_sec()
 
         while rospy.Time.now().to_sec() - start_time < duration and not rospy.is_shutdown():
             self.pub.publish(self.cmd_pub)
             rospy.sleep(0.001)
-        self.stop()
+        self.stop(2)
+        self.move_straight_slow(1.75,0.2)
+        self.stop(2)
+        
 
-    def stop(self):
+    def stop(self,duration = 5):
         self.cmd_pub.vel_right = 0
         self.cmd_pub.vel_left = 0
         self.pub.publish(self.cmd_pub)
-        rospy.sleep(5)
+        rospy.sleep(duration)
     
-    def move_square(self, side_length = 2.0):
-        for i in range(4):
-            rospy.loginfo(f"moving side {i+1}")
-            self.move_straight_slow()
-            self.move_straight()
-            
-            rospy.loginfo(f"turning {i+1}")
-            self.turn()
+    def go(self, side_length = 2.0):
+        self.move_straight_slow(.1)
+        self.move_straight(.4,.1)
+        rospy.loginfo(f"turning")
+        self.stop()
+        self.turn('left')
+
 
     def talk(self): #defines method
 
@@ -103,14 +115,14 @@ if __name__ == "__main__": ## The main function which will be called when your p
     try:
         rospy.init_node('driving')
         drive = Driver() # Create obj of the Driver class
-        rospy.Time(3) # Delay to wait enough time for the code to run
-        drive.move_square()
+        rospy.sleep(3) # Delay to wait enough time for the code to run
+        drive.go()
         #rate = rospy.Rate(20)
         # Keep the line above - you might be able to reduce the delay a bit,
         #while not rospy.is_shutdown(): # Run ros forever - you can change
-            #drive.talk()
-            #rate.sleep()
+        #    drive.talk()
+        #    rate.sleep()
 # this as well instead of running forever
-            # drive.drive() # calling your node function
+        #    drive.drive() # calling your node function
     except rospy.ROSInterruptException:
         pass

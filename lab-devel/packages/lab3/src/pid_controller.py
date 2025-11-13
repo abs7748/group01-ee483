@@ -36,7 +36,17 @@ class PID:
         rospy.Subscriber("/ee483mm01/lane_filter_node/lane_pose", LanePose, self.callback)
         self.pub_control = rospy.Publisher("/ee483mm01/car_cmd_switch_node/cmd", Twist2DStamped, queue_size=10)
         self.pub_phi = rospy.Publisher("/filtered_phi", Float32, queue_size=10)
+
+        rospy.Timer(rospy.Duration(1.0), self.update_params)
         
+
+    def update_params(self, event):
+        self.Kp = rospy.get_param("/Kp", self.Kp)
+        self.Ki = rospy.get_param("/Ki", self.Ki)
+        self.Kd = rospy.get_param("/Kd", self.Kd)
+        self.v = rospy.get_param("/v", self.v)
+
+
 
 
     def callback(self, msg):
@@ -51,18 +61,6 @@ class PID:
         average = sum/len(self.phi)
         self.pub_phi.publish(average)
 
-
-        if rospy.has_param("Kp"):
-            self.Kp = rospy.get_param("Kp")
-        
-        if rospy.has_param("Ki"):
-            self.Ki = rospy.get_param("Ki")
-
-        if rospy.has_param("Kd"):
-            self.Kd = rospy.get_param("Kd")
-
-        if rospy.has_param("/v"):
-            self.v = rospy.get_param("/v")
        
 
         try:

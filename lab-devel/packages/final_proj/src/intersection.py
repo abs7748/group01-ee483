@@ -5,6 +5,7 @@ import numpy as np
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CompressedImage
 from cv_bridge import CvBridge
+from duckietown_msgs.msg import WheelsCmdStamped # Import the message for the wheel comm
 
 class Intersector:
     def __init__(self):
@@ -19,8 +20,11 @@ class Intersector:
         # self.pub_combined = rospy.Publisher("/sim/rqt_image_view/image_combined", Image, queue_size=10)
         # self.pub_edges_white = rospy.Publisher("/sim/rqt_image_view/edges_white", Image, queue_size=10)
         self.pub_edges_red = rospy.Publisher("/sim/rqt_image_view/edges_red", Image, queue_size=10)
+        self.pub = rospy.Publisher('/ee483mm01/wheels_driver_node/wheels_cmd', WheelsCmdStamped, queue_size=10)
+        self.cmd_pub = WheelsCmdStamped()
 
-
+        self.stop_sent = False
+        self.move_straight()
 
     def output_lines(self, original_image, lines, line_color):
         output = np.copy(original_image)
@@ -32,9 +36,31 @@ class Intersector:
                 cv2.circle(output, (l[2],l[3]), 5, (0,0,255))
         return output
 
+    def stop(self):
+        self.cmd_pub.vel_right = 0
+        self.cmd_pub.vel_left = 0
+        self.pub.publish(self.cmd_pub)
+        self.stop_sent = True
+
+    def move_straight(self,speed =0.3):
+        self.cmd_pub.vel_right = speed 
+        self.cmd_pub.vel_left = speed +0.1
+        self.timer = rospy.Timer(rospy.Duration(0.01), self.publish_cmd)
+    
+    def publish_cmd(self, event):
+        if not self.stop_sent:
+            self.pub.publish(self.cmd_pub)
+        else:
+            self.cmd_pub.vel_right = 0
+            self.cmd_pub.vel_left = 0
+            self.pub.publish(self.cmd_pub)
+            self.timer.shutdown()
 
 
     def image_callback(self, msg):
+        if self.stop_sent:
+            return 
+
         try:
             # Convert ROS image to cv
             cv_image = self.bridge.compressed_imgmsg_to_cv2(msg)
@@ -89,14 +115,18 @@ class Intersector:
 
             # hough transform
             lines_red = cv2.HoughLinesP(combined_red, 1, np.pi/180, 10, minLineLength=10, maxLineGap=50)
+
+            if lines_red is not None and len(lines_red) > 5:
+                self.stop()
+                self.stop_sent = True 
+                rospy.loginfo("red detected ... stopping")
+                return
+
             output_red = self.output_lines(cropped_image, lines_red, (0,0,0))
            
-
-
             # Publish the image with lines
             output_msg = self.bridge.cv2_to_imgmsg(output_red, encoding='bgr8')
             self.pub_edges_red.publish(output_msg)
-
 
 
         except Exception as e:

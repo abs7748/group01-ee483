@@ -18,7 +18,7 @@ section, while publishing wheel commands to the robot.
 <img width="478" height="510" alt="image" src="https://github.com/user-attachments/assets/726e6f01-9b46-4f26-8066-e5c9cf590a05" />
 
 **How to run the program:**
-Lab devel -> src- -> Running the driver.py node to run the program for the Autonomous Duckiebot Taxi.
+Lab devel -> packages -> final_proj -> src -> run the driver.py node to execute the program for the Autonomous Duckiebot Taxi.
 
 <img width="427" height="374" alt="image" src="https://github.com/user-attachments/assets/2b225137-477f-43b2-b03f-0051ae004a56" />
 
